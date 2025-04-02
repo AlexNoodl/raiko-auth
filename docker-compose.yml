@@ -1,0 +1,17 @@
+services:
+  raiko-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: raiko-auth
+    container_name: raiko-auth
+    ports:
+      - "5001:8080"
+    env_file:
+      - ./.env
+    networks:
+      - mongo-network
+
+networks:
+  mongo-network:
+    external: true
