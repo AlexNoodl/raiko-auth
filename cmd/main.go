@@ -7,9 +7,13 @@ import (
 	_ "github/alexnoodl/raiko-auth/docs"
 	"github/alexnoodl/raiko-auth/internal/config"
 	"github/alexnoodl/raiko-auth/internal/handler"
-	"github/alexnoodl/raiko-auth/internal/service"
+	"github/alexnoodl/raiko-auth/internal/services"
 	"github/alexnoodl/raiko-auth/pkg/database"
+	pb "github/alexnoodl/raiko-auth/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
+	"net"
 )
 
 // @title API Авторизации
@@ -37,7 +41,7 @@ func main() {
 
 	router.Use(gin.Recovery())
 
-	authService := service.NewAuthService(db, cfg.Logger, []byte(cfg.JWTKey))
+	authService := services.NewAuthService(db, cfg.Logger, []byte(cfg.JWTKey))
 	authHandler := handler.NewAuthHandler(authService, cfg.Logger)
 
 	{
@@ -51,6 +55,24 @@ func main() {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	cfg.Logger.Info("Server starting on port ", cfg.Port)
-	router.Run(":" + cfg.Port)
+	go func() {
+		cfg.Logger.Info("Server starting on port: ", cfg.Port)
+		if err := router.Run(":" + cfg.Port); err != nil {
+			cfg.Logger.Fatal("HTTP server failed: ", err)
+		}
+	}()
+
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		cfg.Logger.Fatal("Failed to listen for gRPC: ", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterAuthServiceServer(grpcServer, services.NewAuthGrpcServer(authService, cfg.Logger))
+	reflection.Register(grpcServer)
+
+	cfg.Logger.Info("Starting gRPC server on port 50051")
+	if err := grpcServer.Serve(lis); err != nil {
+		cfg.Logger.Fatal("gRPC server failed: ", err)
+	}
 }

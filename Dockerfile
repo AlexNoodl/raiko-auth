@@ -19,6 +19,6 @@ COPY --from=builder /app/.env /app/.env
 
 RUN chmod +x /app/raiko-auth
 
-EXPOSE 8080
+EXPOSE 8080 50051
 
 CMD ["/app/raiko-auth"]

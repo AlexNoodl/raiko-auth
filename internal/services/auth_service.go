@@ -1,4 +1,4 @@
-package service
+package services
 
 import (
 	"context"
@@ -46,15 +46,17 @@ func (s *AuthService) Register(user *models.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	count, err := s.db.Collection("users").CountDocuments(ctx, bson.M{"or": []bson.M{
-		{"email": user.Email},
-		{"username": user.Username},
-	}})
+	count, err := s.db.Collection("users").CountDocuments(ctx, bson.M{
+		"$or": []bson.M{
+			{"email": user.Email},
+			{"username": user.Username},
+		}})
 
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to check existing users")
 		return err
 	}
+
 	if count > 0 {
 		s.logger.WithFields(logrus.Fields{
 			"email":    user.Email,

@@ -4,16 +4,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github/alexnoodl/raiko-auth/internal/models"
-	"github/alexnoodl/raiko-auth/internal/service"
+	"github/alexnoodl/raiko-auth/internal/services"
 	"net/http"
 )
 
 type AuthHandler struct {
-	authService *service.AuthService
+	authService *services.AuthService
 	logger      *logrus.Logger
 }
 
-func NewAuthHandler(authService *service.AuthService, logger *logrus.Logger) *AuthHandler {
+func NewAuthHandler(authService *services.AuthService, logger *logrus.Logger) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		logger:      logger,
